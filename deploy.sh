@@ -251,7 +251,7 @@ systemctl restart caddy
 # Start the application
 print_status "Starting the application..."
 cd $APP_DIR
-su - $APP_USER -c "cd $APP_DIR && docker compose up -d --build"
+su - $APP_USER -c "cd $APP_DIR && sudo docker compose up -d --build"
 
 # Final instructions
 echo ""
@@ -264,7 +264,7 @@ print_status "Make sure your domain's DNS is pointing to this server's IP addres
 print_status "Caddy will automatically obtain and renew SSL certificates for you."
 echo ""
 print_status "To check the application logs:"
-echo "  sudo su - $APP_USER -c 'cd $APP_DIR && docker compose logs -f'"
+echo "  sudo su - $APP_USER -c 'cd $APP_DIR && sudo docker compose logs -f'"
 echo ""
 print_status "To check Caddy logs:"
 echo "  sudo tail -f /var/log/caddy/nostr-relay.log"
