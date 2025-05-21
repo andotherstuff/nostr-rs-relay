@@ -22,6 +22,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 use tracing::{debug, info, trace, warn};
+use hex;
 
 pub type SqlitePool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 pub type PooledConnection = r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>;
@@ -193,6 +194,43 @@ pub async fn db_writer(
                     .try_send(Notice::blocked(event.id, "event kind is blocked by relay"))
                     .ok();
                 continue;
+            }
+        }
+
+        // NIP-70 Protected Tag enforcement
+        let has_protected_tag = event.tags.iter().any(|tag| tag.first().map(|s| s == "-").unwrap_or(false));
+        if has_protected_tag {
+            if !settings.protected_tags.enabled {
+                debug!("rejecting event: {}, protected tags not enabled", event.get_event_id_prefix());
+                notice_tx
+                    .try_send(Notice::blocked(
+                        event.id,
+                        "Relay does not accept events with protected tags (NIP-70)"
+                    ))
+                    .ok();
+                continue;
+            } else {
+                // Require NIP-42 authentication and pubkey match
+                let Some(auth_pubkey) = subm_event.auth_pubkey.as_ref().map(hex::encode) else {
+                    debug!("rejecting event: {}, protected tag requires authentication", event.get_event_id_prefix());
+                    notice_tx
+                        .try_send(Notice::blocked(
+                            event.id,
+                            "Protected tag events require NIP-42 authentication"
+                        ))
+                        .ok();
+                    continue;
+                };
+                if event.pubkey != auth_pubkey {
+                    debug!("rejecting event: {}, protected tag author mismatch", event.get_event_id_prefix());
+                    notice_tx
+                        .try_send(Notice::blocked(
+                            event.id,
+                            "Authenticated pubkey does not match event author for protected tag event"
+                        ))
+                        .ok();
+                    continue;
+                }
             }
         }
 

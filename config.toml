@@ -251,3 +251,7 @@ limit_scrapers = false
 
 # optional if `direct_message=false`
 #secret_key = "<nostr nsec>"
+
+[protected_tags]
+# Enable support for NIP-70 protected tags. If enabled, [authorization].nip42_auth must also be true.
+enabled = false

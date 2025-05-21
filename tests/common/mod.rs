@@ -48,6 +48,27 @@ pub fn start_relay() -> Result<Relay> {
     })
 }
 
+pub fn start_relay_with_config(mut settings: config::Settings) -> Result<Relay> {
+    let _trace_sub = tracing_subscriber::fmt::try_init();
+    info!("Starting a new relay (custom config)");
+    let port = get_available_port().unwrap();
+    info!("Found open port: {}", port);
+    settings.network.address = "127.0.0.1".to_owned();
+    settings.network.port = port;
+    settings.database.in_memory = true;
+    settings.database.min_conn = 4;
+    settings.database.max_conn = 8;
+    let (shutdown_tx, shutdown_rx): (MpscSender<()>, MpscReceiver<()>) = syncmpsc::channel();
+    let handle = thread::spawn(move || {
+        let _ = start_server(&settings, shutdown_rx);
+    });
+    Ok(Relay {
+        port,
+        handle,
+        shutdown_tx,
+    })
+}
+
 // check if the server is healthy via HTTP request
 async fn server_ready(relay: &Relay) -> Result<bool> {
     let uri: String = format!("http://127.0.0.1:{}/", relay.port);

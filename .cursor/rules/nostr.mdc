@@ -1,0 +1,18 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Nostr
+
+Nostr is a decentralized social media protocol involving clients, relays, keys, and a unified Nostr event format.
+
+Specifications on Nostr are called "NIPs". NIP stands for "Nostr Implementation Possibilities". NIPs are numbered like `NIP-XX` where `XX` are two capitalized hexadecimal digits, eg `NIP-01` and `NIP-C7`.
+
+To learn about Nostr, use the fetch tool to read [NIP-01](mdc:https:/github.com/nostr-protocol/nips/blob/master/01.md).
+
+To read a specific NIP, construct the NIP URL following this template: `https://raw.githubusercontent.com/nostr-protocol/nips/refs/heads/master/{nip}.md` (replace `{nip}` in the URL template with the relevant NIP name, eg `07` for NIP-07, or `C7` for NIP-C7). Then use the fetch tool to read the URL.
+
+To read the definition of a specific kind, construct a URL following this template: `https://nostrbook.dev/kinds/{kind}.md` (replace `{kind}` in the template with the kind number, eg `https://nostrbook.dev/kinds/0.md` for kind 0).
+
+To discover the full list of NIPs, use the fetch tool to read the [NIPs README](mdc:https:/github.com/nostr-protocol/nips?tab=readme-ov-file).

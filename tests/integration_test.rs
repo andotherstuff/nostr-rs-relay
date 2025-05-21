@@ -77,3 +77,68 @@ async fn publish_test() -> Result<()> {
     let _res = relay.shutdown_tx.send(());
     Ok(())
 }
+
+#[tokio::test]
+async fn protected_tag_rejected_by_default() -> Result<()> {
+    let relay = common::start_relay()?;
+    common::wait_for_healthy_relay(&relay).await?;
+    let (mut ws, _res) = connect_async(format!("ws://localhost:{}", relay.port)).await?;
+    // Event with a protected tag and valid id/sig
+    let protected_event = r#"["EVENT", {"kind":1,"id":"1dc687a97c9824b28c89a955206cd6851e5ac6a767c5cc49591c018427afaa78","pubkey":"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798","created_at":1747816564,"tags":[["-"]],"content":"hello from the nostr army knife","sig":"e498d336313fdc6f26179523da80c36052ded6c43341f8f0f21bc2f6ae3bfceb82118860e25a3bae0ddd28f8e3babe7dfd1fbdf3d27cd1a0209c798b3aba3fa2"}]"#;
+    ws.send(protected_event.into()).await?;
+    let response = ws.next().await;
+    // Parse the response as a Nostr notice array and check for the error message
+    let notice_msg = if let Some(Ok(msg)) = response {
+        if let Ok(arr) = serde_json::from_str::<serde_json::Value>(&msg.to_string()) {
+            if arr.is_array() && arr[0] == "NOTICE" {
+                arr[1].as_str().unwrap_or("").to_string()
+            } else {
+                msg.to_string()
+            }
+        } else {
+            msg.to_string()
+        }
+    } else {
+        String::new()
+    };
+    println!("notice_msg: {}", notice_msg);
+    assert!(notice_msg.contains("Relay does not accept events with protected tags"));
+    ws.close(None).await?;
+    let _ = relay.shutdown_tx.send(());
+    Ok(())
+}
+
+#[tokio::test]
+async fn protected_tag_requires_authentication() -> Result<()> {
+    let mut settings = nostr_rs_relay::config::Settings::default();
+    settings.protected_tags.enabled = true;
+    settings.authorization.nip42_auth = true;
+    let relay = common::start_relay_with_config(settings)?;
+    common::wait_for_healthy_relay(&relay).await?;
+    let (mut ws, _res) = connect_async(format!("ws://localhost:{}", relay.port)).await?;
+    // Read and ignore the initial AUTH challenge
+    let _auth_challenge = ws.next().await;
+    // Event with a protected tag and valid id/sig
+    let protected_event = r#"["EVENT", {"kind":1,"id":"1dc687a97c9824b28c89a955206cd6851e5ac6a767c5cc49591c018427afaa78","pubkey":"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798","created_at":1747816564,"tags":[["-"]],"content":"hello from the nostr army knife","sig":"e498d336313fdc6f26179523da80c36052ded6c43341f8f0f21bc2f6ae3bfceb82118860e25a3bae0ddd28f8e3babe7dfd1fbdf3d27cd1a0209c798b3aba3fa2"}]"#;
+    ws.send(protected_event.into()).await?;
+    let response = ws.next().await;
+    let notice_msg = if let Some(Ok(msg)) = response {
+        if let Ok(arr) = serde_json::from_str::<serde_json::Value>(&msg.to_string()) {
+            if arr.is_array() && arr[0] == "NOTICE" {
+                arr[1].as_str().unwrap_or("").to_string()
+            } else {
+                msg.to_string()
+            }
+        } else {
+            msg.to_string()
+        }
+    } else {
+        String::new()
+    };
+    println!("notice_msg: {}", notice_msg);
+    assert!(notice_msg.contains("Protected tag events require NIP-42 authentication"));
+    ws.close(None).await?;
+    let _ = relay.shutdown_tx.send(());
+    Ok(())
+}
+

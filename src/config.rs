@@ -179,6 +179,12 @@ pub struct Logging {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[allow(unused)]
+pub struct ProtectedTags {
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(unused)]
 pub struct Settings {
     pub info: Info,
     pub diagnostics: Diagnostics,
@@ -192,6 +198,7 @@ pub struct Settings {
     pub retention: Retention,
     pub options: Options,
     pub logging: Logging,
+    pub protected_tags: ProtectedTags,
 }
 
 impl Settings {
@@ -269,6 +276,11 @@ impl Settings {
                     .as_ref()
                     .is_some_and(|key| key != "<nostr nsec>"));
             }
+        }
+
+        // Validate protected tags settings
+        if settings.protected_tags.enabled && !settings.authorization.nip42_auth {
+            panic!("[protected_tags] enabled requires [authorization].nip42_auth = true");
         }
 
         Ok(settings)
@@ -362,6 +374,9 @@ impl Default for Settings {
             logging: Logging {
                 folder_path: None,
                 file_prefix: None,
+            },
+            protected_tags: ProtectedTags {
+                enabled: false,
             },
         }
     }
