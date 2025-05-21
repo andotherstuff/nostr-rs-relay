@@ -1,0 +1,44 @@
+# Caddyfile for nostr-rs-relay
+# Place this at /etc/caddy/Caddyfile on your Ubuntu server
+
+your-relay-domain.com {
+    # Enable logging
+    log {
+        output file /var/log/caddy/nostr-relay.log {
+            roll_size 10MB
+            roll_keep 10
+        }
+    }
+    
+    # Reverse proxy to nostr-rs-relay
+    reverse_proxy localhost:8080 {
+        # WebSocket support
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        
+        # Timeouts appropriate for WebSockets
+        transport http {
+            keepalive 1h
+            response_header_timeout 30s
+            read_timeout 5s
+            write_timeout 10s
+            dial_timeout 5s
+        }
+    }
+    
+    # Security headers
+    header {
+        # Enable HTTP Strict Transport Security (HSTS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Prevent MIME sniffing
+        X-Content-Type-Options "nosniff"
+        # Frame options
+        X-Frame-Options "SAMEORIGIN"
+        # XSS Protection
+        X-XSS-Protection "1; mode=block"
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

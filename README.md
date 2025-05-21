@@ -39,10 +39,27 @@ mirrored on [GitHub](https://github.com/scsibug/nostr-rs-relay).
 - [x] NIP-42: [Authentication of clients to relays](https://github.com/nostr-protocol/nips/blob/master/42.md)
 - [x] NIP-70: [Protected Tags](https://github.com/nostr-protocol/nips/blob/master/70.md)
 
-## Quick Start
+## Deployment Options
+
+### 1. Docker Compose with Caddy (Recommended for Production)
+
+The easiest way to deploy nostr-rs-relay in production is using Docker Compose with Caddy as a reverse proxy. This setup:
+
+- Automatically handles SSL certificates with Let's Encrypt
+- Configures proper WebSocket proxying
+- Ensures the application restarts automatically
+- Provides a secure configuration out of the box
+
+For detailed instructions, see [DOCKER_COMPOSE.md](DOCKER_COMPOSE.md) or use the automated deployment script:
+
+```bash
+sudo ./deploy.sh
+```
+
+### 2. Docker/Podman (Quick Start)
 
 The provided `Dockerfile` will compile and build the server
-application.  Use a bind mount to store the SQLite database outside of
+application. Use a bind mount to store the SQLite database outside of
 the container image, and map the container's 8080 port to a host port
 (7000 in the example below).
 
@@ -90,7 +107,7 @@ Text Note [81cf...2652] from 296a...9b92 5 seconds ago
 A pre-built container is also available on DockerHub:
 https://hub.docker.com/r/scsibug/nostr-rs-relay
 
-## Build and Run (without Docker)
+### 3. Build and Run (without Docker)
 
 Building `nostr-rs-relay` requires an installation of Cargo & Rust: https://www.rust-lang.org/tools/install
 
@@ -152,8 +169,10 @@ settings.
 ## Reverse Proxy Configuration
 
 For examples of putting the relay behind a reverse proxy (for TLS
-termination, load balancing, and other features), see [Reverse
-Proxy](docs/reverse-proxy.md).
+termination, load balancing, and other features), see:
+
+- [Reverse Proxy Examples](docs/reverse-proxy.md) (HAProxy, Nginx, Traefik)
+- [Caddy Configuration](Caddyfile.example) (Recommended)
 
 ## Dev Channel
 
