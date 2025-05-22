@@ -16,12 +16,6 @@ services:
       - RUST_LOG=warn,nostr_rs_relay=info
     networks:
       - nostr-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
 
 networks:
   nostr-network:
