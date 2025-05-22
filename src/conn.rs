@@ -54,7 +54,7 @@ impl ClientConn {
             client_ip_addr,
             client_id,
             subscriptions: HashMap::new(),
-            max_subs: 32,
+            max_subs: 48,
             auth: NoAuth,
         }
     }
